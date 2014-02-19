@@ -1,0 +1,247 @@
+
+/* requireJS module definition */
+define(["util", "vbo", "models/cube", "models/triangle", "models/band", "scene_node", "gl-matrix", "program", "shaders"], 
+       (function(Util, vbo, Cube, Triangle, Band, SceneNode, glmatrix, Program, shaders) {
+       
+    "use strict";
+    
+    // constructor, takes WebGL context object as argument
+    var Robot = function(gl, programs, config) {
+
+
+      //Components to build Robot
+      var cube          = new Cube(gl);
+      var triangle      = new Triangle(gl);
+      var band          = new Band(gl, {radius: 0.5, height: 1.0, segments: 50});
+      //new Band(gl, {radius: 0.5, height: 1.0, segments: 50});
+
+      // Dimension of the shapes to be drawn
+      var headSize      = [0.3, 0.4, 0.3];
+      var hatSize		= [0.4, 0.4, 0,6];
+      var neckSize      = [0.2, 0.2, 0.1];
+      var torsoSize     = [0.6, 1.0, 0.4];
+      var shoulderSize  = [0.2, 0.1, 0.2];
+      var upperArmSize  = [2.5, 0.75, 0.7];
+      var foreArmSize   = [1.5, 0.75, 0.7];
+      var ellbowSize    = [0.5, 1.2, 1.0];
+      var wristSize     = [1.5, 0.1, 1.0];
+      var handSize      = [1.0, 1.0, 1.0];
+
+      // Positions of body parts
+      var torsoPosition             = [0, 0, 0];
+      var hatPosition				= [0, 0.2, 0];
+      var headPosition              = [0.0, 0.75, 0.0];
+      var neckPosition              = [0.0, 0.0, 0.0];
+      
+      var shoulderRightPosition     = [0.35, 0.4, 0];
+      var upperArmRightPosition     = [-1.5, 0.25, 0.15];
+      var ellbowRightPosition       = [-0.5, -0.3, 0.0];
+      var foreArmRightPosition      = [-0.7, 0.2, 0.0];
+	  var wristRightPosition        = [-0.5, 0.0, 0];
+      var handRightPosition         = [0.0, -0.75, 0];
+	  
+	  
+	  var shoulderLeftPosition     = [-0.35, 0.4, 0];
+      var upperArmLeftPosition     = [-1.5, -0.25, 0.15];
+      var ellbowLeftPosition       = [-0.5, -0.3, 0.0];
+      var foreArmLeftPosition      = [-0.7, 0.2, 0];
+	  var wristLeftPosition        = [-0.5, 0.0, 0];
+      var handLeftPosition         = [ 0.0, -1.0, 0];
+	
+      //Sceleton for torso and head
+      var hat		   = new SceneNode("hat");
+      mat4.translate(hat.transformation, hatPosition);
+      
+      this.head         = new SceneNode("head", [hat]);
+      mat4.translate(this.head.transformation, headPosition);
+      
+      var neck         = new SceneNode("neck", [this.head]);
+      mat4.translate(neck.transformation, neckPosition);
+
+	  var torso        = new SceneNode("torso");
+	  mat4.translate(torso.transformation, torsoPosition);
+	  
+	
+	  
+      //Right side
+      var handRight    = new SceneNode("handRight");
+      mat4.translate(handRight.transformation, handRightPosition);
+      mat4.scale    (handRight.transformation, handSize);    
+
+      var wristRight   = new SceneNode("wristRight", [handRight]);
+      mat4.translate(wristRight.transformation, wristRightPosition);
+      mat4.rotate   (wristRight.transformation, Math.PI,[1,1,0]);
+      mat4.scale    (wristRight.transformation, wristSize);
+
+      var foreArmRight = new SceneNode("foreArmRight", [wristRight]);
+      mat4.translate(foreArmRight.transformation, foreArmRightPosition);
+      mat4.scale    (foreArmRight.transformation, foreArmSize);
+
+
+      var ellbowRight  = new SceneNode("ellbowRight", [foreArmRight]);
+      mat4.translate(ellbowRight.transformation, ellbowRightPosition);
+      // mat4.rotate   (ellbowRight.transformation, Math.PI,[1,1,0]);
+      mat4.scale    (ellbowRight.transformation, ellbowSize);
+
+      var upperArmRight= new SceneNode("upperArmRight", [ellbowRight]);
+      mat4.translate(upperArmRight.transformation, upperArmRightPosition);
+      mat4.scale    (upperArmRight.transformation, upperArmSize);
+
+      var shoulderRight= new SceneNode("shoulderRight", [upperArmRight]);
+      mat4.translate(shoulderRight.transformation, shoulderRightPosition);
+      mat4.rotate   (shoulderRight.transformation, Math.PI,[1,1,0]);
+      mat4.scale    (shoulderRight.transformation, shoulderSize);
+      
+
+
+      //Left side
+      
+      var handLeft = new SceneNode("handLeft");
+      mat4.translate(handLeft.transformation, handLeftPosition);
+      mat4.scale    (handLeft.transformation, handSize); 
+          
+
+      var wristLeft   = new SceneNode("wristLeft", [handLeft]);
+      mat4.translate(wristLeft.transformation, wristLeftPosition);
+      mat4.rotate   (wristLeft.transformation,   Math.PI,[1,1,0]);
+      mat4.scale    (wristLeft.transformation, wristSize);
+
+      var foreArmLeft = new SceneNode("foreArmLeft", [wristLeft]);
+      mat4.translate(foreArmLeft.transformation, foreArmLeftPosition);
+      mat4.scale    (foreArmLeft.transformation, foreArmSize);
+
+      var ellbowLeft  = new SceneNode("ellbowLeft", [foreArmLeft]);
+      mat4.translate(ellbowLeft.transformation, ellbowLeftPosition);
+      //mat4.rotate   (ellbowLeft.transformation, Math.PI,[1,1,0]);
+      mat4.scale    (ellbowLeft.transformation, ellbowSize);
+
+      var upperArmLeft= new SceneNode("upperArmLeft", [ellbowLeft]);
+      mat4.translate(upperArmLeft.transformation, upperArmLeftPosition);
+      mat4.scale    (upperArmLeft.transformation, upperArmSize);
+
+      var shoulderLeft= new SceneNode("shoulderLeft", [upperArmLeft]);
+      mat4.translate(shoulderLeft.transformation, shoulderLeftPosition);
+      mat4.rotate   (shoulderLeft.transformation, Math.PI,[1,1,0]);
+      mat4.scale    (shoulderLeft.transformation, shoulderSize);
+
+      //add object 
+      
+                             
+      torso.addObjects([neck, shoulderRight, shoulderLeft]);
+      //, shoulderRight]);
+	  mat4.translate(torso.transformation, torsoPosition);
+	  
+      //Skins - Right
+      var torsoSkin     = new SceneNode ("torso skin", [cube], programs.vertexColor);
+      mat4.scale(torsoSkin.transformation, torsoSize);
+      
+      var hatSkin		= new SceneNode ("hat skin", [triangle], programs.vertexColor);
+      mat4.rotate(hatSkin.transformation, 0.6*Math.PI, [0,1,0]);
+      mat4.scale(hatSkin.transformation, hatSize);
+
+      var headSkin      = new SceneNode ("head skin", [cube], programs.vertexColor);
+      mat4.rotate(headSkin.transformation, 0.6*Math.PI, [0,1,0])// color
+      mat4.scale(headSkin.transformation, headSize);
+
+      var neckSkin      = new SceneNode ("neck skin", [band], programs.red);
+      mat4.translate(neckSkin.transformation, [0,0.55,0]);
+      mat4.scale(neckSkin.transformation, neckSize);
+
+      var shoulderSkin  = new SceneNode ("shoulder skin", [band], programs.red);
+
+      var upperArmSkin  = new SceneNode ("upperArm skin", [cube], programs.vertexColor);
+
+      var ellbowSkin    = new SceneNode ("ellbow skin", [band], programs.red);
+      mat4.translate(ellbowSkin.transformation, [0,0.2,0]);
+      mat4.scale(ellbowSkin.transformation, ellbowSize);
+
+      var foreArmSkin  = new SceneNode ("foreArm skin", [cube], programs.vertexColor);
+
+
+      var wristSkin     = new SceneNode ("wrist skin", [band], programs.red);
+      // mat4.translate(ellbowSkin.transformation, [0,0.2,0]);
+      // mat4.scale(wristSkin.transformation, wristSize);
+
+      var handSkin      = new SceneNode ("hand skin", [triangle], programs.vertexColor);
+      mat4.rotate(handSkin.transformation, Math.PI, [1,0,1]);
+      
+      //Connect sceleton and skins
+      torso.addObjects([torsoSkin]);
+      hat.addObjects([hatSkin]);
+      this.head.addObjects([headSkin]);
+      neck.addObjects([neckSkin]);
+
+      shoulderRight.addObjects([shoulderSkin]);
+      shoulderLeft.addObjects([shoulderSkin]);
+      upperArmRight.addObjects([upperArmSkin]);
+      upperArmLeft.addObjects([upperArmSkin]);
+      ellbowRight.addObjects([ellbowSkin]);
+      ellbowLeft.addObjects([ellbowSkin]);
+      foreArmRight.addObjects([foreArmSkin]);
+      foreArmLeft.addObjects([foreArmSkin]);
+      wristRight.addObjects([wristSkin]);
+      wristLeft.addObjects([wristSkin]);
+      handRight.addObjects([handSkin]);
+      handLeft.addObjects([handSkin]);
+
+      //the robot
+      var robot = new SceneNode ("robot", [torso]);
+
+      mat4.translate(robot.transformation, [0,-0.2,0]);
+      
+      this.world = new SceneNode("world", [robot], programs.vertexColor);
+      
+      
+      // for the UI - this will be accessed directly by HtmlController
+      this.drawOptions = {"Perspective": true};
+      
+               
+    
+    };
+
+    // draw method: activate buffers and issue WebGL draw() method
+    Robot.prototype.draw = function(gl, program, transformation) {
+
+    this.world.draw (gl, program, transformation);
+
+    };
+    
+    
+   
+    Robot.prototype.rotate = function(robotParts, angle) {
+    	
+    	
+        window.console.log("rotating around " + robotParts + " by " + angle + " degrees." );
+		
+        // degrees to radians
+        //angle = angle*Math.PI/180;
+        
+        // manipulate the corresponding matrix, depending on the name of the joint
+        switch(robotParts) {
+			
+            case "rotateHead":
+            	mat4.rotate(this.head.transformation, angle, [0,1,0]);
+            	break;
+/*/            case "rotateLeftArm":
+            	mat4.rotate(leftArm.transformation, angle, [1,0,0]);
+             	break;
+          
+           case "rotateRightArm":
+            	mat4.rotate(rightArm.transformation, angle, [1,0,0]);
+            	break; /*/
+
+              
+            default:
+                window.console.log("axis " + robotParts + " not implemented.");
+            break;
+        };
+
+        // redraw the scene
+        this.draw();
+    }
+	
+    return Robot;
+
+})); // define
+
+    
